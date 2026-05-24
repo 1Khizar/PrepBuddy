@@ -136,9 +136,10 @@ def delete_paper(paper_id: int, db: Session = Depends(get_db)):
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
     
-    # Optional: Delete from Supabase Storage if you have the file path
-    # Since we store the full URL, we need to extract the path if we want to delete from storage
-    # For now, let's just delete from DB to fix the error
+    # 1. Delete associated saved records to avoid Foreign Key IntegrityErrors
+    db.query(SavedPaper).filter(SavedPaper.paper_id == paper_id).delete()
+
+    # 2. Delete the actual paper
     db.delete(paper)
     db.commit()
     return {"message": "Paper deleted successfully"}
