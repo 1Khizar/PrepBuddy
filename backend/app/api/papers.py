@@ -8,6 +8,11 @@ from app.models.user import User as UserModel
 from app.models.engagement import SavedPaper
 from app.api.auth import get_current_user
 from app.core.supabase import get_supabase
+import re
+
+def sanitize_filename(text: str) -> str:
+    text = text.replace(' ', '_')
+    return re.sub(r'[^a-zA-Z0-9_\-]', '', text)
 
 router = APIRouter(prefix="/papers", tags=["Past Papers"])
 
@@ -26,7 +31,8 @@ async def upload_paper(
     
     # 1. Create a safe path/filename for Supabase
     file_ext = os.path.splitext(file.filename)[1]
-    safe_filename = f"{exam_type}/{subject}/{year}/{title.replace(' ', '_')}{file_ext}"
+    safe_title = sanitize_filename(title)
+    safe_filename = f"{exam_type}/{subject}/{year}/{safe_title}{file_ext}"
     
     try:
         # 2. Read file content
@@ -94,7 +100,8 @@ async def upload_drive_paper(
     file_ext = os.path.splitext(filename)[1]
     if not file_ext:
         file_ext = ".pdf"
-    safe_filename = f"{exam_type}/{subject}/{year}/{title.replace(' ', '_')}{file_ext}"
+    safe_title = sanitize_filename(title)
+    safe_filename = f"{exam_type}/{subject}/{year}/{safe_title}{file_ext}"
 
     try:
         # 3. Upload to Supabase Storage
